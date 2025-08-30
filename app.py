@@ -66,7 +66,7 @@ st.markdown("""
 <style>
 body { background-color: #141414; }
 .title { 
-    font-size: 60px; 
+    font-size: 50px; 
     color: #E50914; 
     text-align: center; 
     font-weight: 900; 
