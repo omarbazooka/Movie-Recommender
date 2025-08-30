@@ -13,6 +13,10 @@ def load_data():
 
 movies, links = load_data()
 
+# 🖨 التأكد من الأعمدة
+st.write("Movies columns:", movies.columns)
+st.write("Links columns:", links.columns)
+
 # 🧠 تجهيز TF-IDF باستخدام الـ genres فقط
 tfidf = TfidfVectorizer(stop_words='english')
 movies['content'] = movies['genres'].fillna('')
@@ -26,13 +30,11 @@ API_KEY = "a937d1d5938a111c2fbed18fc773f68d"
 def clean_text(text):
     if pd.isna(text):
         return ""
-    # نحول كل حاجة لصغير ونتخلص من الفراغات والشرط والرموز
     return ''.join(e for e in text.lower() if e.isalnum())
 
 # دالة الترشيح الذكية
 def get_recommendations(title, cosine_sim=cosine_sim):
     title_clean = clean_text(title)
-    # البحث في العناوين بعد تنظيفها
     idx_list = movies[movies['title'].apply(lambda x: clean_text(x).find(title_clean) != -1)].index
     if len(idx_list) == 0:
         return pd.DataFrame()
@@ -41,7 +43,6 @@ def get_recommendations(title, cosine_sim=cosine_sim):
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:6]
     movie_indices = [i[0] for i in sim_scores]
     return movies.iloc[movie_indices][['title', 'genres', 'movieId']]
-
 
 # 🌍 جلب الصورة والوصف من TMDB
 def get_movie_info_by_id(movie_id):
@@ -54,7 +55,7 @@ def get_movie_info_by_id(movie_id):
     if response.status_code == 200:
         data = response.json()
         poster = f"https://image.tmdb.org/t/p/w500{data['poster_path']}" if data.get("poster_path") else None
-        overview = data.get("overview", "No description available.")
+        overview = data.get("overview") or "No description available."
         return poster, overview
     return None, "No description available."
 
@@ -117,14 +118,14 @@ if movie_name:
         cols = st.columns(3)
         for i, row in enumerate(results.itertuples(), 1):
             poster, overview = get_movie_info_by_id(row.movieId)
-            if not overview:
-                overview = "No description available."
+            overview = overview or "No description available."
+            overview = str(overview)[:200]  # عشان slicing آمن
             with cols[(i-1) % 3]:
                 st.markdown(f"""
                     <div class="movie-card">
                         {"<img src='" + poster + "' width='200'>" if poster else ""}
                         <div class="movie-title">{row.title}</div>
                         <div class="movie-genre">{row.genres}</div>
-                        <div class="movie-overview">{overview[:200]}...</div>
+                        <div class="movie-overview">{overview}...</div>
                     </div>
                 """, unsafe_allow_html=True)
